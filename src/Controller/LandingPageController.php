@@ -30,7 +30,7 @@ class LandingPageController extends AbstractController
      * @Route("/", name="landing_page")
      * @throws \Exception
      */
-    public function index(Request $request, EntityManagerInterface $entityManager, CartRepository $cartRepository, $amount, StripeService $stripeService)
+    public function index(Request $request, EntityManagerInterface $entityManager, CartRepository $cartRepository, $amount, PaymentService $stripeService)
     {
         $bearer = $_ENV['BEARER_API_KEY'];
 

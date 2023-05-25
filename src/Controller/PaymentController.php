@@ -7,14 +7,16 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Stripe\Checkout\Session;
 
-class StripeService extends AbstractController
+class PaymentService extends AbstractController
 {
-    private $stripeSecretKey = $_ENV['STRIPE_SECRET_KEY'];
 
-    public function __construct($stripeSecretKey)
+    private $stripeSecretKey;
+
+    public function __construct()
     {
-        $this->stripeSecretKey = $stripeSecretKey;
-        Stripe / Stripe::setApiKey($this->stripeSecretKey);
+        $this->stripeSecretKey = $_ENV['STRIPE_SECRET_KEY'];
+
+        \Stripe\Stripe::setApiKey($this->stripeSecretKey);
     }
 
     public function createSession($amount)
