@@ -30,7 +30,7 @@ class LandingPageController extends AbstractController
      * @Route("/", name="landing_page")
      * @throws \Exception
      */
-    public function index(Request $request, EntityManagerInterface $entityManager, CartRepository $cartRepository)
+    public function index(Request $request, EntityManagerInterface $entityManager, CartRepository $cartRepository, $amount, StripeService $stripeService)
     {
         $bearer = $_ENV['BEARER_API_KEY'];
 
@@ -101,7 +101,7 @@ class LandingPageController extends AbstractController
 
             // $statusCode = $response->getStatusCode();
             $content = $response->toArray();
-            // dd($content);
+
             // Récupérez l'ID de commande de l'API
             $orderIdApi = $content['order_id'];
 
@@ -116,6 +116,12 @@ class LandingPageController extends AbstractController
 
 
             // Payement Stripe
+
+
+            $sessionId = $stripeService->createSession($amount);
+
+            return new Response($sessionId);
+
 
             // mettre a jour l'entité cart
 
