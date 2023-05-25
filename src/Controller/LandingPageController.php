@@ -18,6 +18,10 @@ use App\Repository\CartRepository;
 use Symfony\Component\Form\SubmitButton;
 use App\Service\GuzzleClient;
 use GuzzleHttp\Client;
+use Stripe\Checkout\Session;
+use Stripe\Stripe;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class LandingPageController extends AbstractController
@@ -30,7 +34,7 @@ class LandingPageController extends AbstractController
      * @Route("/", name="landing_page")
      * @throws \Exception
      */
-    public function index(Request $request, EntityManagerInterface $entityManager, CartRepository $cartRepository, $amount, PaymentService $stripeService)
+    public function index(Request $request, EntityManagerInterface $entityManager, CartRepository $cartRepository, \Twig\Environment $twig)
     {
         $bearer = $_ENV['BEARER_API_KEY'];
 
@@ -118,29 +122,89 @@ class LandingPageController extends AbstractController
             // Payement Stripe
 
 
-            $sessionId = $stripeService->createSession($amount);
+            // Récupération de la clé Stripe
+            Stripe::setApiKey($_ENV['STRIPE_SECRET_KEY']);
 
-            return new Response($sessionId);
+            // création d'une nouvelle session de paiement avec la méthode statique create de la classe Session
+            $session = Session::create([
+                'payment_method_types' => ['card'], // spécifie les types de paiement acceptés ( ici, seulement la carte)
+                'line_items' => [ // représente les éléments de la commande ( prix, devise, nom produit, quantité)
+                    [
+                        'price_data' => [
+                            'currency' => 'eur',
+                            'unit_amount' => $cart->getProduct()->getSale() * 100,
+                            'product_data' => [
+                                'name' => $cart->getProduct()->getName(),
+                            ],
+                        ],
+                        'quantity' => 1,
+                    ],
+                ],
+                'mode' => 'payment', // paiement en temps réel
+
+                // URL de redirection :
+                'success_url' => $this->generateUrl('confirmation', ['id' => $cart->getId()], UrlGeneratorInterface::ABSOLUTE_URL),
+                'cancel_url' => $this->generateUrl('landing_page', [], UrlGeneratorInterface::ABSOLUTE_URL),
+            ]);
+
+            // dd($cart);
 
 
-            // mettre a jour l'entité cart
-
-            // Refaire une requete a l'api pour actualiser le status de payement
-
-
-            $this->redirectToRoute('confirmation');
+            // Redirigez le client vers la page de paiement Stripe
+            return $this->redirect($session->url);
         }
+        // génère une réponse HTML et passe des variables à Twig pour le rendu
+        return $this->render('landing_page/index_new.html.twig', [
+            'form' => $form->createView(),
+            'allproduct' => $allproduct,
+        ]);
 
 
-        return $this->render('landing_page/index_new.html.twig', ['form' => $form, 'allproduct' => $allproduct]);
+
+        // Refaire une requete a l'api pour actualiser le status de payement
+
+
+
+        // $this->redirectToRoute('confirmation');
+
+
+        // return $this->render('landing_page/index_new.html.twig', ['form' => $form, 'allproduct' => $allproduct]);
+
+    }
+
+    public function apiUpdatePaymentStatus($apiCommandId, $status)
+    {
+        $statusJson = ['status' => 'PAID'];
+
+        $response2 = $this->client->request(
+            'POST',
+            'https://api-commerce.simplon-roanne.com/order/' . $apiCommandId . '/status',
+
+            [
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                    'accept' => 'application/json',
+                    'Authorization' => 'Bearer mJxTXVXMfRzLg6ZdhUhM4F6Eutcm1ZiPk4fNmvBMxyNR4ciRsc8v0hOmlzA0vTaX',
+                ],
+                'json' => $statusJson,
+            ]
+        );
     }
 
 
+
     /**
-     * @Route("/confirmation", name="confirmation")
+     * @Route("/confirmation/{id}", name="confirmation")
      */
-    public function confirmation()
+    public function confirmation(Cart $cart, Request $request, CartRepository $cartRepository)
     {
+        // dd($cart);
+        // mettre a jour l'entité cart
+        // Si l'objet $cart est une instance de la classe Commandes, le statut est mis à jour dans la BDD
+        $cart->setStatus('PAID');
+        $cartRepository->save($cart, true);
+        // Redirection sur la méthode de modification du statut de paiement dans l'API grâce à l'ID de l'API
+        $this->apiUpdatePaymentStatus($cart->getOrderIdApi(), 'PAID');
         // send email confirmation
         return $this->render('landing_page/confirmation.html.twig', []);
     }

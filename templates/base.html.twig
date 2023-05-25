@@ -2,13 +2,13 @@
 <html>
     <head>
         <meta charset="utf-8">
-        <title>BattleOffice, petites guerres entre amis - Vente privée de jouets Nerfs Elite</title>
+        <title>Juda'vocats</title>
 
         <link  rel="icon" type="image/x-icon" href="favicon.png" />
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
         <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
-        <link rel="stylesheet" href="assets/css/main.css">
-        <link rel="stylesheet" href="assets/css/main_new.css">
+        <link rel="stylesheet" href="{{asset('assets/css/main.css')}}">
+        <link rel="stylesheet" href="{{asset('assets/css/main_new.css')}}">
 
         {% block stylesheets %}{% endblock %}
     </head>
@@ -18,7 +18,7 @@
                 <div class="nav-wrapper">
                     <div class="row">
                         <div class="col s12 m6">
-                            <a href="#!" class="brand-logo">BattleOffice</a>
+                            <a href="{{ path("landing_page") }}" class="brand-logo">BattleOffice</a>
                         </div>
                         <div class="col s12 m6">
                             <div class="picto-nav">
@@ -60,8 +60,8 @@
                 </div>
             </div>
         </footer>
-        <script src="assets/js/materialize.js"></script>
-        <script src="assets/js/main.js"></script>
+        <script src="{{asset('assets/js/materialize.js')}}"></script>
+        <script src="{{asset('assets/js/main.js')}}"></script>
         {% block javascripts %}{% endblock %}
     </body>
 </html>

@@ -29,6 +29,13 @@ class Cart
     private $orderIdApi;
 
     /**
+     * @var string|null
+     *
+     * @ORM\Column(name="status", type="string", length=10, nullable=true)
+     */
+    private $status;
+
+    /**
      * @var \Product
      *
      * @ORM\ManyToOne(targetEntity="Product")
@@ -61,6 +68,18 @@ class Cart
     public function setOrderIdApi(?int $orderIdApi): self
     {
         $this->orderIdApi = $orderIdApi;
+
+        return $this;
+    }
+
+    public function getStatus(): ?string
+    {
+        return $this->status;
+    }
+
+    public function setStatus(?string $status): self
+    {
+        $this->status = $status;
 
         return $this;
     }
