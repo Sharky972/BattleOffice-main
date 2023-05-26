@@ -20,9 +20,12 @@ use App\Service\GuzzleClient;
 use GuzzleHttp\Client;
 use Stripe\Checkout\Session;
 use Stripe\Stripe;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\Component\Mime\Email;
+
 
 class LandingPageController extends AbstractController
 {
@@ -196,7 +199,7 @@ class LandingPageController extends AbstractController
     /**
      * @Route("/confirmation/{id}", name="confirmation")
      */
-    public function confirmation(Cart $cart, Request $request, CartRepository $cartRepository)
+    public function confirmation(Cart $cart, Request $request, CartRepository $cartRepository, MailerInterface $mailer, \Twig\Environment $twig)
     {
         // dd($cart);
         // mettre a jour l'entité cart
@@ -205,8 +208,28 @@ class LandingPageController extends AbstractController
         $cartRepository->save($cart, true);
         // Redirection sur la méthode de modification du statut de paiement dans l'API grâce à l'ID de l'API
         $this->apiUpdatePaymentStatus($cart->getOrderIdApi(), 'PAID');
+
         // send email confirmation
-        return $this->render('landing_page/confirmation.html.twig', []);
+        // return $this->render('landing_page/confirmation.html.twig', []);
+        // envoi de mail à la validation de paiement grâce à un template twig prédéfini
+
+        $template = $twig->render('emails/confirmation.html.twig', [
+            'cart' => $cart,
+        ]);
+
+        $email = (new TemplatedEmail())
+            ->from('admin@battle-office.com')
+            ->to($cart->getUser()->getEmail())
+            ->subject('Payment Confirmation')
+            ->htmlTemplate('emails/confirmation.html.twig')
+            ->context([
+                'cart' => $cart,
+            ]);
+
+        $mailer->send($email);
+        return $this->render('landing_page/confirmation.html.twig', [
+            'template' => $template,
+        ]);
     }
 
 
